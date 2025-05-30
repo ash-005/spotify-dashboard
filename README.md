@@ -1,6 +1,6 @@
 # My Spotify Stats — Visualized Dashboard
 
-Welcome to **My Spotify Stats**, a Flask + Plotly-powered web dashboard that brings your music tastes to life through vibrant visualizations and data storytelling.
+Welcome to **My Spotify Stats**, a Flask + Plotly-powered web dashboard.
 
 This project fetches and analyzes your top 500 Spotify tracks to reveal patterns, genre trends, artist insights, and temporal changes in your listening habits — all presented in a beautiful interactive interface.
 
