@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Spotify Analytics Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Spotify Analytics Dashboard</h1>
+        <p class="description">In-depth analysis of My top 500 tracks on Spotify</p>
+
+        <!-- Filters -->
+        <div class="filters">
+            <form id="filterForm" class="filter-form">
+                <div class="filter-group">
+                    <label for="popularity_min">Min Popularity:</label>
+                    <input type="range" id="popularity_min" name="popularity_min" 
+                           min="0" max="100" value="{{ popularity_range[0] }}"
+                           oninput="this.nextElementSibling.value = this.value">
+                    <output>{{ popularity_range[0] }}</output>
+                </div>
+                <div class="filter-group">
+                    <label for="popularity_max">Max Popularity:</label>
+                    <input type="range" id="popularity_max" name="popularity_max" 
+                           min="0" max="100" value="{{ popularity_range[1] }}"
+                           oninput="this.nextElementSibling.value = this.value">
+                    <output>{{ popularity_range[1] }}</output>
+                </div>
+                <button type="submit" class="filter-button">Apply Filters</button>
+            </form>
+        </div>
+
+        <div class="chart-grid">
+            <section class="chart-container chart-full">
+                <h2>Most Frequent Artists</h2>
+                <div>{{ most_frequent_artists|safe }}</div>
+                <p class="description">Artists with the most tracks in my top songs</p>
+            </section>
+            
+            <section class="chart-container chart-full">
+                <h2>Artist Popularity by Genre</h2>
+                <div>{{ artist_popularity_genre|safe }}</div>
+                <p class="description">Artist popularity and track count breakdown by genre</p>
+            </section>
+    
+            <section class="chart-container chart-full">
+                <h2>Genre Distribution</h2>
+                <div>{{ genre_chart|safe }}</div>
+                <p class="description">Distribution of music genres in my top tracks</p>
+            </section>
+
+            
+            <section class="chart-container">
+                <h2>Artist vs Track Popularity</h2>
+                <div>{{ pop_chart|safe }}</div>
+                <p class="description">Correlation between artist and track popularity</p>
+            </section>
+
+          
+            <section class="chart-container">
+                <h2>Artist Popularity</h2>
+                <div>{{ artist_pop_dist|safe }}</div>
+                <p class="description">Distribution of artist popularity scores</p>
+            </section>           
+            <section class="chart-container">
+                <h2>Track Popularity</h2>
+                <div>{{ track_pop_dist|safe }}</div>
+                <p class="description">Distribution of track popularity scores</p>
+            </section>
+
+            <section class="chart-container">
+                <h2>Duration Analysis</h2>
+                <div>{{ duration_chart|safe }}</div>
+                <p class="description">Distribution of track durations</p>
+            </section>
+
+            <section class="chart-container">
+                <h2>Duration by Genre</h2>
+                <div>{{ duration_by_genre|safe }}</div>
+                <p class="description">Track duration patterns across different genres</p>
+            </section>
+
+            <section class="chart-container chart-full">
+                <h2>Genre Evolution Over Time</h2>
+                <div>{{ genre_evolution|safe }}</div>
+                <p class="description">How my musical taste evolved through different genres over time</p>
+            </section>
+        </div>
+
+        <footer class="description">
+            <p>Data from Spotify API • Updated {{ current_date }}</p>
+        </footer>
+    </div>
+
+    <script>
+        // Initialize form with query params if they exist
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const minPopularity = urlParams.get('popularity_min');
+            const maxPopularity = urlParams.get('popularity_max');
+            
+            if (minPopularity) {
+                const minSlider = document.getElementById('popularity_min');
+                minSlider.value = minPopularity;
+                minSlider.nextElementSibling.value = minPopularity;
+            }
+            
+            if (maxPopularity) {
+                const maxSlider = document.getElementById('popularity_max');
+                maxSlider.value = maxPopularity;
+                maxSlider.nextElementSibling.value = maxPopularity;
+            }
+        };
+
+        // Ensure min doesn't exceed max and vice versa
+        document.getElementById('popularity_min').addEventListener('input', function() {
+            const maxSlider = document.getElementById('popularity_max');
+            if (parseInt(this.value) > parseInt(maxSlider.value)) {
+                maxSlider.value = this.value;
+                maxSlider.nextElementSibling.value = this.value;
+            }
+        });
+
+        document.getElementById('popularity_max').addEventListener('input', function() {
+            const minSlider = document.getElementById('popularity_min');
+            if (parseInt(this.value) < parseInt(minSlider.value)) {
+                minSlider.value = this.value;
+                minSlider.nextElementSibling.value = this.value;
+            }
+        });
+    </script>
+</body>
+</html>

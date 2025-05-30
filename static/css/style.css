@@ -1,0 +1,204 @@
+:root {
+    --spotify-green: #1DB954;
+    --spotify-dark: #121212;
+    --spotify-darker: #282828;
+    --spotify-light-text: #ffffff;
+    --spotify-gray-text: #b3b3b3;
+    --spotify-highlight: #535353;
+}
+
+body {
+    font-family: 'Circular', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--spotify-dark);
+    color: var(--spotify-light-text);
+    margin: 0;
+    padding: 20px;
+    line-height: 1.6;
+}
+
+h1, h2 {
+    color: var(--spotify-green);
+    text-align: center;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+}
+
+h1 {
+    font-size: 2.5em;
+    margin-bottom: 0.5em;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.chart-container {
+    background-color: var(--spotify-darker);
+    border-radius: 8px;
+    padding: 24px;
+    margin: 24px 0;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease-in-out;
+}
+
+.chart-container:hover {
+    transform: translateY(-2px);
+}
+
+.description {
+    color: var(--spotify-gray-text);
+    text-align: center;
+    margin: 12px 0;
+    font-size: 0.9em;
+    line-height: 1.5;
+}
+
+.chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.chart-full {
+    grid-column: 1 / -1;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid var(--spotify-highlight);
+    margin: 30px 0;
+}
+
+/* Loading animation */
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+}
+
+.loading::after {
+    content: '';
+    width: 30px;
+    height: 30px;
+    border: 2px solid var(--spotify-gray-text);
+    border-top-color: var(--spotify-green);
+    border-radius: 50%;
+    animation: loading 0.8s linear infinite;
+}
+
+@keyframes loading {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Filter controls */
+.filters {
+    background-color: var(--spotify-darker);
+    border-radius: 8px;
+    padding: 24px;
+    margin: 24px 0;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: center;
+    justify-content: center;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.filter-group label {
+    color: var(--spotify-gray-text);
+    min-width: 120px;
+}
+
+.filter-group input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 200px;
+    height: 4px;
+    background: var(--spotify-highlight);
+    border-radius: 2px;
+    outline: none;
+}
+
+.filter-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--spotify-green);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+.filter-group input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--spotify-green);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+    border: none;
+}
+
+.filter-group input[type="range"]::-webkit-slider-thumb:hover,
+.filter-group input[type="range"]::-moz-range-thumb:hover {
+    transform: scale(1.2);
+}
+
+.filter-group output {
+    color: var(--spotify-light-text);
+    font-weight: bold;
+    min-width: 40px;
+    text-align: center;
+}
+
+.filter-button {
+    background-color: var(--spotify-green);
+    color: var(--spotify-dark);
+    border: none;
+    padding: 8px 24px;
+    border-radius: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.1s ease, background-color 0.2s ease;
+}
+
+.filter-button:hover {
+    transform: scale(1.05);
+    background-color: #1ed760;
+}
+
+.filter-button:active {
+    transform: scale(0.95);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .chart-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-container {
+        padding: 16px;
+        margin: 16px 0;
+    }
+    
+    h1 {
+        font-size: 2em;
+    }
+}
