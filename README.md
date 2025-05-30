@@ -1,4 +1,4 @@
-# My Spotify Stats — Visualized Dashboard
+# My Spotify Stats - Visualized Dashboard
 
 Welcome to **My Spotify Stats**, a Flask + Plotly-powered web dashboard.
 
