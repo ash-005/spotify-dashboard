@@ -1,3 +1,13 @@
+import plotly.express as px
+import plotly.graph_objects as go
+import pandas as pd
+from typing import List
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils.caching import cache_plot
+from .plot_utils import apply_dark_theme, SPOTIFY_COLORS, QUALITATIVE_PALETTE
+
 @cache_plot(ttl_seconds=300)
 def genre_cooccurrence_network(df: pd.DataFrame, top_n: int = 15) -> str:
     """
