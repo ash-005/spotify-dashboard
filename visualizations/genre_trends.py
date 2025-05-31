@@ -1,3 +1,128 @@
+@cache_plot(ttl_seconds=300)
+def genre_cooccurrence_network(df: pd.DataFrame, top_n: int = 15) -> str:
+    """
+    Plot a network graph of genre co-occurrences per artist.
+    Nodes: genres. Edges: number of artists sharing both genres.
+    Only top_n genres by frequency are shown for clarity.
+    """
+    import itertools
+    import networkx as nx
+    try:
+        def parse_genres(x):
+            if isinstance(x, str):
+                try:
+                    return eval(x) if x.startswith('[') else [x]
+                except:
+                    return [x]
+            elif isinstance(x, list):
+                return x
+            else:
+                return [str(x)]
+
+        # Get top N genres
+        genres_series = df['genres'].apply(parse_genres)
+        all_genres = genres_series.explode().value_counts().head(top_n).index.tolist()
+
+        # Build co-occurrence matrix (per artist)
+        artist_genres = df.groupby('artist_name')['genres'].apply(lambda x: list(itertools.chain.from_iterable([parse_genres(g) for g in x]))).reset_index()
+        # Only keep top genres
+        artist_genres['genres'] = artist_genres['genres'].apply(lambda gs: [g for g in gs if g in all_genres])
+
+        # Count co-occurrences
+        cooccurrence = {}
+        for genres in artist_genres['genres']:
+            for g1, g2 in itertools.combinations(sorted(set(genres)), 2):
+                key = tuple(sorted([g1, g2]))
+                cooccurrence[key] = cooccurrence.get(key, 0) + 1
+
+        # Build networkx graph
+        G = nx.Graph()
+        for genre in all_genres:
+            G.add_node(genre)
+        for (g1, g2), weight in cooccurrence.items():
+            if weight > 0:
+                G.add_edge(g1, g2, weight=weight)
+
+        # Node positions (circular for clarity)
+        pos = nx.circular_layout(G)
+
+        # Plotly edge traces
+        edge_x = []
+        edge_y = []
+        edge_weights = []
+        for edge in G.edges(data=True):
+            x0, y0 = pos[edge[0]]
+            x1, y1 = pos[edge[1]]
+            edge_x += [x0, x1, None]
+            edge_y += [y0, y1, None]
+            edge_weights.append(edge[2]['weight'])
+
+        # Normalize edge width
+        max_weight = max(edge_weights) if edge_weights else 1
+        edge_widths = [2 + 6 * (w / max_weight) for w in edge_weights]
+
+        edge_trace = go.Scatter(
+            x=edge_x,
+            y=edge_y,
+            line=dict(width=1, color=SPOTIFY_COLORS['light_gray']),
+            hoverinfo='none',
+            mode='lines',
+            opacity=0.5
+        )
+
+        # Plotly node traces
+        node_x = []
+        node_y = []
+        node_text = []
+        for i, genre in enumerate(G.nodes()):
+            x, y = pos[genre]
+            node_x.append(x)
+            node_y.append(y)
+            node_text.append(f"<b>{genre}</b><br>Appears with: " + ", ".join([g for g in G.neighbors(genre)]))
+
+        node_trace = go.Scatter(
+            x=node_x,
+            y=node_y,
+            mode='markers+text',
+            text=[g for g in G.nodes()],
+            textposition='bottom center',
+            hoverinfo='text',
+            marker=dict(
+                color=[QUALITATIVE_PALETTE[i % len(QUALITATIVE_PALETTE)] for i in range(len(G.nodes()))],
+                size=30,
+                line=dict(width=2, color=SPOTIFY_COLORS['black'])
+            ),
+            hovertext=node_text
+        )
+
+        fig = go.Figure(data=[edge_trace, node_trace])
+        fig.update_layout(
+            title='Genre Combo Generator: Genre Co-occurrence Network',
+            showlegend=False,
+            height=700,
+            margin=dict(l=40, r=40, t=60, b=40),
+            plot_bgcolor=SPOTIFY_COLORS['dark_gray'],
+            paper_bgcolor=SPOTIFY_COLORS['black'],
+            font=dict(color=SPOTIFY_COLORS['white']),
+            hoverlabel=dict(
+                bgcolor=SPOTIFY_COLORS['dark_gray'],
+                font_size=14,
+                font_family="Segoe UI"
+            ),
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
+        )
+        return fig.to_html(full_html=False)
+    except Exception as e:
+        print(f"Error in genre_cooccurrence_network: {str(e)}")
+        fig = go.Figure()
+        fig.add_annotation(
+            text="Error loading genre co-occurrence network",
+            showarrow=False,
+            font=dict(color=SPOTIFY_COLORS['light_gray'])
+        )
+        apply_dark_theme(fig)
+        return fig.to_html(full_html=False)
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
