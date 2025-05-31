@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request
 from utils.data_loader import load_data, load_fixed_genres
-from visualizations.genre_trends import genre_distribution, genre_evolution_by_year, genre_cooccurrence_network
+from visualizations.genre_trends import genre_distribution, genre_evolution_by_year
 from visualizations.popularity_analysis import (
     artist_vs_track_popularity,
     popularity_distribution
@@ -55,12 +55,7 @@ def index():
             print(f"Error generating genre distribution: {str(e)}")
             visualizations['genre_chart'] = "<div class='error-message'>Error loading genre distribution</div>"
 
-        try:
-            visualizations['genre_cooccurrence'] = genre_cooccurrence_network(df)
-        except Exception as e:
-            print(f"Error generating genre co-occurrence network: {str(e)}")
-            visualizations['genre_cooccurrence'] = "<div class='error-message'>Error loading genre co-occurrence network</div>"
-            
+       
         try:
             visualizations['pop_chart'] = artist_vs_track_popularity(df)
         except Exception as e:
