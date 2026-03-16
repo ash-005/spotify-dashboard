@@ -1,14 +1,18 @@
 from flask import Flask, render_template, request
 from utils.data_loader import load_data, load_fixed_genres
 from visualizations.genre_trends import genre_distribution, genre_evolution_by_year
-from visualizations.popularity_analysis import artist_vs_track_popularity, popularity_distribution
-from visualizations.duration_analysis import duration_distribution, duration_by_genre
-from visualizations.artist_analysis import most_frequent_artists, artist_popularity_genre
-from visualizations.additional_analysis import (
-    explicit_distribution, release_year_distribution,
-    top_albums, followers_vs_popularity
+from visualizations.popularity_analysis import (
+    artist_vs_track_popularity,
+    popularity_distribution
 )
-from datetime import datetime
+from visualizations.duration_analysis import (
+    duration_distribution,
+    duration_by_genre
+)
+from visualizations.artist_analysis import (
+    most_frequent_artists,
+    artist_popularity_genre
+)
 
 app = Flask(__name__)
 
@@ -19,74 +23,89 @@ fixed_genres_df = load_fixed_genres()
 print("Updating genres...")
 try:
     missing_genres_mask = df['genres'].apply(lambda x: not x)
+    
     if not fixed_genres_df.empty:
+        # Create a mapping from id to genres, keeping only the first occurrence of each id
         genres_map = fixed_genres_df.drop_duplicates('id').set_index('id')['genres']
+        
+        # Update only the rows with missing genres using the mapping
         updates = df.loc[missing_genres_mask, 'id'].map(genres_map)
         df.loc[missing_genres_mask & updates.notna(), 'genres'] = updates[updates.notna()]
+        
+        #print(f"Updated {missing_genres_mask.sum()} tracks with missing genres")
 except Exception as e:
     print(f"Warning: Error updating genres: {str(e)}")
-
-
-def compute_stats(data):
-    """Compute summary stats for the hero cards."""
-    total = len(data)
-    artists = data['artist_name'].nunique()
-    genres_all = data['genres'].apply(lambda x: x if isinstance(x, list) else []).explode()
-    top_genre = genres_all.value_counts().idxmax() if not genres_all.empty else 'N/A'
-    avg_pop = round(data['popularity'].mean(), 1)
-    avg_dur = round(data['duration_ms'].mean() / 60000, 1)
-    top_artist = data['artist_name'].value_counts().idxmax()
-    return dict(
-        total_tracks=total, unique_artists=artists, top_genre=top_genre,
-        avg_popularity=avg_pop, avg_duration=avg_dur, top_artist=top_artist,
-    )
-
+    print("Continuing with original genres...")
 
 @app.route('/')
 def index():
+    """Render the main dashboard page with all visualizations."""
     try:
-        pop_min = float(request.args.get('popularity_min', 0))
-        pop_max = float(request.args.get('popularity_max', 100))
-        pop_range = (pop_min, pop_max)
+        # Get popularity filter settings from query parameters
+        popularity_min = float(request.args.get('popularity_min', 0))
+        popularity_max = float(request.args.get('popularity_max', 100))
+        popularity_range = (popularity_min, popularity_max)
+        
+        visualizations = {}
+        visualizations['popularity_range'] = popularity_range
+        
+        try:
+            visualizations['genre_chart'] = genre_distribution(df, popularity_range)
+        except Exception as e:
+            print(f"Error generating genre distribution: {str(e)}")
+            visualizations['genre_chart'] = "<div class='error-message'>Error loading genre distribution</div>"
 
-        stats = compute_stats(df)
-        viz = {'popularity_range': pop_range, **stats}
-
-        chart_fns = [
-            ('genre_chart', lambda: genre_distribution(df, pop_range)),
-            ('pop_chart', lambda: artist_vs_track_popularity(df)),
-            ('duration_chart', lambda: duration_distribution(df)),
-            ('duration_by_genre', lambda: duration_by_genre(df, pop_range)),
-            ('genre_evolution', lambda: genre_evolution_by_year(df)),
-            ('most_frequent_artists', lambda: most_frequent_artists(df)),
-            ('artist_popularity_genre', lambda: artist_popularity_genre(df)),
-            ('explicit_chart', lambda: explicit_distribution(df)),
-            ('release_year_chart', lambda: release_year_distribution(df)),
-            ('top_albums', lambda: top_albums(df)),
-            ('followers_vs_pop', lambda: followers_vs_popularity(df)),
-        ]
-        pop_dist_fn = lambda: popularity_distribution(df)
-
-        for key, fn in chart_fns:
-            try:
-                viz[key] = fn()
-            except Exception as e:
-                print(f"Error generating {key}: {e}")
-                viz[key] = f"<div class='error-message'>Error loading {key}</div>"
+       
+        try:
+            visualizations['pop_chart'] = artist_vs_track_popularity(df)
+        except Exception as e:
+            print(f"Error generating popularity chart: {str(e)}")
+            visualizations['pop_chart'] = "<div class='error-message'>Error loading popularity chart</div>"
+            
+        try:
+            visualizations['duration_chart'] = duration_distribution(df)
+        except Exception as e:
+            print(f"Error generating duration chart: {str(e)}")
+            visualizations['duration_chart'] = "<div class='error-message'>Error loading duration chart</div>"
+            
+        try:
+            visualizations['duration_by_genre'] = duration_by_genre(df, popularity_range)
+        except Exception as e:
+            print(f"Error generating duration by genre: {str(e)}")
+            visualizations['duration_by_genre'] = "<div class='error-message'>Error loading duration by genre chart</div>"
+            
+        try:
+            visualizations['genre_evolution'] = genre_evolution_by_year(df)
+        except Exception as e:
+            print(f"Error generating genre evolution: {str(e)}")
+            visualizations['genre_evolution'] = "<div class='error-message'>Error loading genre evolution</div>"
+            
+        try:
+            visualizations['artist_pop_dist'], visualizations['track_pop_dist'] = popularity_distribution(df)
+        except Exception as e:
+            print(f"Error generating popularity distributions: {str(e)}")
+            visualizations['artist_pop_dist'] = "<div class='error-message'>Error loading artist popularity distribution</div>"
+            visualizations['track_pop_dist'] = "<div class='error-message'>Error loading track popularity distribution</div>"
 
         try:
-            viz['artist_pop_dist'], viz['track_pop_dist'] = pop_dist_fn()
+            visualizations['most_frequent_artists'] = most_frequent_artists(df)
         except Exception as e:
-            print(f"Error generating popularity distributions: {e}")
-            viz['artist_pop_dist'] = viz['track_pop_dist'] = "<div class='error-message'>Error</div>"
+            print(f"Error generating most frequent artists: {str(e)}")
+            visualizations['most_frequent_artists'] = "<div class='error-message'>Error loading most frequent artists chart</div>"
+            
+        try:
+            visualizations['artist_popularity_genre'] = artist_popularity_genre(df)
+        except Exception as e:
+            print(f"Error generating artist popularity by genre: {str(e)}")
+            visualizations['artist_popularity_genre'] = "<div class='error-message'>Error loading artist popularity by genre chart</div>"
+        
+        from datetime import datetime
+        visualizations['current_date'] = datetime.now().strftime('%B %d, %Y')
 
-        viz['current_date'] = datetime.now().strftime('%B %d, %Y')
-        return render_template('index.html', **viz)
+        return render_template('index.html', **visualizations)
     except Exception as e:
-        print(f"Error generating dashboard: {e}")
+        print(f"Error generating dashboard: {str(e)}")
         return render_template('error.html', error=str(e))
-
-
 if __name__ == '__main__':
     from waitress import serve
-    serve(app, host='0.0.0.0', port=8088)
+    serve(app, host='0.0.0.0', port=8080)
