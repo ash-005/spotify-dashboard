@@ -9,6 +9,48 @@ from utils.caching import cache_plot
 from .plot_utils import apply_dark_theme, SPOTIFY_COLORS, QUALITATIVE_PALETTE
 
 @cache_plot(ttl_seconds=300)
+def genre_distribution(df: pd.DataFrame, popularity_range: tuple = None, top_n: int = 15) -> str:
+    try:
+        if popularity_range:
+            df = df[(df['popularity'] >= popularity_range[0]) & (df['popularity'] <= popularity_range[1])]
+
+        def parse_genres(x):
+            if isinstance(x, str):
+                try:
+                    return eval(x) if x.startswith('[') else [x]
+                except:
+                    return [x]
+            elif isinstance(x, list):
+                return x
+            return [str(x)]
+
+        genres_series = df['genres'].apply(parse_genres)
+        genre_counts = genres_series.explode().value_counts().head(top_n)
+
+        fig = go.Figure(go.Treemap(
+            labels=genre_counts.index.tolist(),
+            parents=[''] * len(genre_counts),
+            values=genre_counts.values.tolist(),
+            textinfo='label+value+percent root',
+            marker=dict(
+                colors=[QUALITATIVE_PALETTE[i % len(QUALITATIVE_PALETTE)] for i in range(len(genre_counts))],
+                line=dict(width=2, color='rgba(0,0,0,0.3)')
+            ),
+            hovertemplate='<b>%{label}</b><br>Tracks: %{value}<br>Share: %{percentRoot:.1%}<extra></extra>',
+        ))
+        fig.update_layout(title='Genre Distribution', height=500, margin=dict(l=10, r=10, t=50, b=10))
+        apply_dark_theme(fig)
+        return fig.to_html(full_html=False)
+    except Exception as e:
+        print(f"Error in genre_distribution: {str(e)}")
+        fig = go.Figure()
+        fig.add_annotation(text="Error loading genre distribution", showarrow=False,
+                           font=dict(color=SPOTIFY_COLORS['light_gray']))
+        apply_dark_theme(fig)
+        return fig.to_html(full_html=False)
+
+
+@cache_plot(ttl_seconds=300)
 def genre_cooccurrence_network(df: pd.DataFrame, top_n: int = 10) -> str:
    
     import itertools
