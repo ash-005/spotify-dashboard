@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Analytics Dashboard — My Top 500</title>
+    <meta name="description"
+        content="Beautiful analytics dashboard analyzing your top 500 Spotify tracks with genre, popularity, duration, and artist insights.">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="icon" href="https://storage.googleapis.com/pr-newsroom-wp/1/2023/05/Spotify_Primary_Logo_RGB_Green.png"
+        type="image/png">
+</head>
+
+<body>
+    <div class="container">
+
+        <!-- Header -->
+        <header class="header" id="dashboard-header">
+            <h1>Spotify Analytics</h1>
+            <p class="subtitle">Deep dive into my top 500 tracks — genres, artists, popularity & more</p>
+        </header>
+
+        <!-- Stat Cards -->
+        <section class="stats-grid" id="stats-section">
+            <div class="stat-card spark-green" id="stat-total-tracks">
+                <div class="stat-icon pulse">🎵</div>
+                <div class="stat-value counter">{{ total_tracks }}</div>
+                <div class="stat-label">Total Tracks</div>
+            </div>
+            <div class="stat-card spark-blue" id="stat-unique-artists">
+                <div class="stat-icon">🎤</div>
+                <div class="stat-value counter">{{ unique_artists }}</div>
+                <div class="stat-label">Unique Artists</div>
+            </div>
+            <div class="stat-card spark-purple" id="stat-top-genre" style="grid-column: span 2;">
+                <div class="stat-icon">🎸</div>
+                <div class="stat-value highlight-text">{{ top_genre }}</div>
+                <div class="stat-label">Your Top Genre</div>
+            </div>
+            <div class="stat-card spark-orange" id="stat-avg-popularity">
+                <div class="stat-icon">🔥</div>
+                <div class="stat-value counter">{{ avg_popularity }}</div>
+                <div class="stat-label">Avg Popularity</div>
+            </div>
+            <div class="stat-card spark-cyan" id="stat-avg-duration">
+                <div class="stat-icon">⏱️</div>
+                <div class="stat-value counter">{{ avg_duration }}<span class="unit">min</span></div>
+                <div class="stat-label">Avg Track Length</div>
+            </div>
+            <div class="stat-card spark-pink" id="stat-top-artist" style="grid-column: span 2;">
+                <div class="stat-icon">⭐</div>
+                <div class="stat-value highlight-text">{{ top_artist }}</div>
+                <div class="stat-label">Most Played Artist</div>
+            </div>
+        </section>
+
+        <!-- Filters -->
+        <form id="filterForm" class="filters">
+            <div class="filter-group">
+                <label for="popularity_min">Min Popularity</label>
+                <input type="range" id="popularity_min" name="popularity_min" min="0" max="100"
+                    value="{{ popularity_range[0] }}" oninput="this.nextElementSibling.value = this.value">
+                <output>{{ popularity_range[0] }}</output>
+            </div>
+            <div class="filter-group">
+                <label for="popularity_max">Max Popularity</label>
+                <input type="range" id="popularity_max" name="popularity_max" min="0" max="100"
+                    value="{{ popularity_range[1] }}" oninput="this.nextElementSibling.value = this.value">
+                <output>{{ popularity_range[1] }}</output>
+            </div>
+            <button type="submit" class="filter-button" id="apply-filters-btn">Apply Filters</button>
+        </form>
+
+        <!-- Charts -->
+        <div class="chart-grid" id="charts-section">
+
+            <!-- New Insights -->
+            <section class="chart-container" id="chart-explicit">
+                <h2>Explicit Content Rating</h2>
+                <p class="description">Split between Explicit and Clean labeled tracks</p>
+                <div>{{ explicit_chart|safe }}</div>
+            </section>
+
+            <section class="chart-container" id="chart-release-year">
+                <h2>Tracks by Release Year</h2>
+                <p class="description">When your favorite tracks were released</p>
+                <div>{{ release_year_chart|safe }}</div>
+            </section>
+
+            <section class="chart-container chart-full" id="chart-top-albums">
+                <h2>Top Albums</h2>
+                <p class="description">The albums with the most tracks in your personal top 500</p>
+                <div>{{ top_albums|safe }}</div>
+            </section>
+
+            <section class="chart-container chart-full" id="chart-followers-vs-pop">
+                <h2>Artist Followers vs Popularity</h2>
+                <p class="description">Mapping the correlation between an artist's following and core popularity</p>
+                <div>{{ followers_vs_pop|safe }}</div>
+            </section>
+
+            <!-- Classic Insights -->
+            <section class="chart-container chart-full" id="chart-frequent-artists">
+                <h2>Most Frequent Artists</h2>
+                <p class="description">Artists with the most tracks in your top songs</p>
+                <div>{{ most_frequent_artists|safe }}</div>
+            </section>
+
+            <section class="chart-container chart-full" id="chart-artist-pop-genre">
+                <h2>Artist Popularity by Genre</h2>
+                <p class="description">Artist popularity and track count breakdown by genre</p>
+                <div>{{ artist_popularity_genre|safe }}</div>
+            </section>
+
+            <section class="chart-container chart-full" id="chart-genre-dist">
+                <h2>Genre Distribution</h2>
+                <p class="description">How your top tracks are distributed across genres</p>
+                <div>{{ genre_chart|safe }}</div>
+            </section>
+
+            <section class="chart-container" id="chart-artist-vs-track">
+                <h2>Artist vs Track Popularity</h2>
+                <p class="description">Correlation between artist and track popularity</p>
+                <div>{{ pop_chart|safe }}</div>
+            </section>
+
+            <section class="chart-container" id="chart-artist-pop">
+                <h2>Artist Popularity</h2>
+                <p class="description">Distribution of artist popularity scores</p>
+                <div>{{ artist_pop_dist|safe }}</div>
+            </section>
+
+            <section class="chart-container" id="chart-track-pop">
+                <h2>Track Popularity</h2>
+                <p class="description">Distribution of track popularity scores</p>
+                <div>{{ track_pop_dist|safe }}</div>
+            </section>
+
+            <section class="chart-container" id="chart-duration">
+                <h2>⏱Duration Analysis</h2>
+                <p class="description">Distribution of track durations</p>
+                <div>{{ duration_chart|safe }}</div>
+            </section>
+
+            <section class="chart-container" id="chart-duration-genre">
+                <h2>Duration by Genre</h2>
+                <p class="description">Track duration patterns across different genres</p>
+                <div>{{ duration_by_genre|safe }}</div>
+            </section>
+
+            <section class="chart-container chart-full" id="chart-genre-evolution">
+                <h2>Genre Evolution Over Time</h2>
+                <p class="description">How your musical taste evolved through different genres</p>
+                <div>{{ genre_evolution|safe }}</div>
+            </section>
+        </div>
+
+        <footer>
+            <p><span class="spotify-badge">● Spotify API</span> &nbsp;•&nbsp; Updated {{ current_date }}</p>
+        </footer>
+    </div>
+
+    <script>
+        // Sync sliders
+        const minS = document.getElementById('popularity_min');
+        const maxS = document.getElementById('popularity_max');
+        minS.addEventListener('input', () => {
+            if (+minS.value > +maxS.value) { maxS.value = minS.value; maxS.nextElementSibling.value = minS.value; }
+        });
+        maxS.addEventListener('input', () => {
+            if (+maxS.value < +minS.value) { minS.value = maxS.value; minS.nextElementSibling.value = maxS.value; }
+        });
+
+        // Restore from URL
+        const p = new URLSearchParams(location.search);
+        if (p.get('popularity_min')) { minS.value = p.get('popularity_min'); minS.nextElementSibling.value = minS.value; }
+        if (p.get('popularity_max')) { maxS.value = p.get('popularity_max'); maxS.nextElementSibling.value = maxS.value; }
+    </script>
+</body>
+
+</html>
